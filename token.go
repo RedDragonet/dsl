@@ -5,6 +5,7 @@ import "fmt"
 const (
 	INTEGER = iota + 1
 	PLUS
+	MINUS
 	EOF
 )
 
