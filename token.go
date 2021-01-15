@@ -6,6 +6,8 @@ const (
 	INTEGER = iota + 1
 	PLUS
 	MINUS
+	MULTIPLICATION
+	DIVISION
 	EOF
 )
 

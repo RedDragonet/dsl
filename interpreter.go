@@ -40,12 +40,22 @@ func (i *interpreter) getNextToken() (token, error) {
 
 		if i.currentChar == "+" {
 			i.advance()
-			return NewToken(PLUS, i.currentChar), nil
+			return NewToken(PLUS, "+"), nil
 		}
 
 		if i.currentChar == "-" {
 			i.advance()
-			return NewToken(MINUS, i.currentChar), nil
+			return NewToken(MINUS, "-"), nil
+		}
+
+		if i.currentChar == "*" {
+			i.advance()
+			return NewToken(MULTIPLICATION, "*"), nil
+		}
+
+		if i.currentChar == "/" {
+			i.advance()
+			return NewToken(DIVISION, "/"), nil
 		}
 	}
 
@@ -97,36 +107,66 @@ func (i *interpreter) advance() {
 
 func (i *interpreter) expr() (int, error) {
 	var err error
+	var result int
+
 	i.currentToken, err = i.getNextToken()
 	if err != nil {
 		return 0, err
 	}
 
-	left := i.currentToken.value
-	i.eat(INTEGER)
+	for {
+		if i.currentToken.iType == EOF {
+			return result, nil
+		}
 
-	op := i.currentToken
-	if op.iType == PLUS {
-		i.eat(PLUS)
-	} else if op.iType == MINUS {
-		i.eat(MINUS)
-	}
+		var left, right string
 
-	right := i.currentToken.value
-	i.eat(INTEGER)
+		if i.currentToken.iType == INTEGER {
+			left = i.currentToken.value
+			i.eat(INTEGER)
+		}
 
-	leftNumber, err := strconv.Atoi(left)
-	if err != nil {
-		return 0, err
+		op := i.currentToken
+		switch op.iType {
+		case PLUS:
+			i.eat(PLUS)
+		case MINUS:
+			i.eat(MINUS)
+		case MULTIPLICATION:
+			i.eat(MULTIPLICATION)
+		case DIVISION:
+			i.eat(DIVISION)
+		}
+
+		right = i.currentToken.value
+		i.eat(INTEGER)
+
+		var leftNumber int
+		if left != "" {
+			leftNumber, err = strconv.Atoi(left)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			leftNumber = result
+		}
+
+		rightNumber, err := strconv.Atoi(right)
+		if err != nil {
+			return 0, err
+		}
+
+		switch op.iType {
+		case PLUS:
+			result = leftNumber + rightNumber
+		case MINUS:
+			result = leftNumber - rightNumber
+		case MULTIPLICATION:
+			result = leftNumber * rightNumber
+		case DIVISION:
+			result = leftNumber / rightNumber
+		default:
+			return 0, fmt.Errorf("unknow operator")
+		}
 	}
-	rightNumber, err := strconv.Atoi(right)
-	if err != nil {
-		return 0, err
-	}
-	if op.iType == PLUS {
-		return leftNumber + rightNumber, nil
-	} else if op.iType == MINUS {
-		return leftNumber - rightNumber, nil
-	}
-	return 0, fmt.Errorf("unknow operator")
 }

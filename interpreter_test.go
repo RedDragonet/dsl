@@ -18,6 +18,12 @@ func Test_interpreter_expr(t *testing.T) {
 
 		{"11 -  11", "11 -  11", 0},
 		{"11 -  22", "11 -  22", -11},
+
+		{"11 *  11", "11 *  11", 121},
+		{"11 /  11", "11 /  11", 1},
+
+
+		{"1 + 2 - 3 + 4", "1 + 2 - 3 + 4", 4},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
