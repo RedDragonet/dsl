@@ -2,6 +2,7 @@ package dsl
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 )
 
@@ -18,6 +19,10 @@ func NewInterpreter(text string) interpreter {
 		text:        text,
 		currentChar: string(text[0]),
 	}
+}
+func (i *interpreter) error() {
+	fmt.Println("语法错误")
+	os.Exit(0)
 }
 
 func (i *interpreter) getNextToken() (token, error) {
@@ -65,11 +70,31 @@ func IsNumeric(s string) bool {
 	_, err := strconv.ParseFloat(s, 64)
 	return err == nil
 }
+func (i *interpreter) term() int {
+	token := i.currentToken
+	i.eat(INTEGER)
+	tokenValue, _ := strconv.Atoi(token.value)
+	return tokenValue
+}
+
+func (i *interpreter) currentIsOp() bool {
+	switch i.currentToken.iType {
+	case PLUS:
+	case MINUS:
+	case MULTIPLICATION:
+	case DIVISION:
+	default:
+		return false
+	}
+	return true
+}
 
 func (i *interpreter) eat(token int) error {
 	var err error
 	if i.currentToken.iType == token {
 		i.currentToken, err = i.getNextToken()
+	} else {
+		i.error()
 	}
 
 	return err
@@ -107,25 +132,13 @@ func (i *interpreter) advance() {
 
 func (i *interpreter) expr() (int, error) {
 	var err error
-	var result int
-
 	i.currentToken, err = i.getNextToken()
 	if err != nil {
 		return 0, err
 	}
 
-	for {
-		if i.currentToken.iType == EOF {
-			return result, nil
-		}
-
-		var left, right string
-
-		if i.currentToken.iType == INTEGER {
-			left = i.currentToken.value
-			i.eat(INTEGER)
-		}
-
+	result := i.term()
+	for i.currentIsOp() {
 		op := i.currentToken
 		switch op.iType {
 		case PLUS:
@@ -138,35 +151,20 @@ func (i *interpreter) expr() (int, error) {
 			i.eat(DIVISION)
 		}
 
-		right = i.currentToken.value
-		i.eat(INTEGER)
-
-		var leftNumber int
-		if left != "" {
-			leftNumber, err = strconv.Atoi(left)
-			if err != nil {
-				return 0, err
-			}
-		} else {
-			leftNumber = result
-		}
-
-		rightNumber, err := strconv.Atoi(right)
-		if err != nil {
-			return 0, err
-		}
+		rightNumber := i.term()
 
 		switch op.iType {
 		case PLUS:
-			result = leftNumber + rightNumber
+			result = result + rightNumber
 		case MINUS:
-			result = leftNumber - rightNumber
+			result = result - rightNumber
 		case MULTIPLICATION:
-			result = leftNumber * rightNumber
+			result = result * rightNumber
 		case DIVISION:
-			result = leftNumber / rightNumber
+			result = result / rightNumber
 		default:
 			return 0, fmt.Errorf("unknow operator")
 		}
 	}
+	return result, nil
 }
